@@ -1,0 +1,14 @@
+#summary Utility that creates DDL scripts for existing Oracle schema.
+
+= Introduction =
+
+Very often developers need to have scripts for all database objects (Tables, Views, Procedures etc.). It is not a problem to create them from existing instance using any tool you like (TOAD (tm), PL/SQL developer (tm)). However it's not so simply to make this process automated.
+
+In the most recent project I was participating, there was a problem - database consists of couple thousands objects, and there were no repository for those except database itself. Means, if sometime server will die - weekly dump is the only way to restore information. Make everyone keep their scripts in SVN not works, because at the end of time - developers runs their script against database and there is no guarantee, they will not modify them just before execution.
+
+So the only compromise solution was - reverse tracking. Every certain period of time some process should mine throught the database, detect all changes made to its structure and present it as bunch of scripts, ready to be commited to SVN.
+
+This is what this project was created for. The aim is to create an utility, that will run through the datatabase and create scripts for all objects. 
+
+
+= Details =
