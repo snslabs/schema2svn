@@ -33,7 +33,13 @@ public class Schema2svn {
             }
             catch (ParseException e) {
                 System.out.println("Incorrect date format!\nUse " +DATE_PATTERN);
-                return;
+                try {
+                    updateAfter = SDF.parse("2001.01.01.00.00.00.000");
+                } catch (ParseException e1) {
+                    e1.printStackTrace();
+                    return;
+                }
+//                return;
             }
 
         }
@@ -53,6 +59,9 @@ public class Schema2svn {
         objectTypeList.add("PACKAGE");
         objectTypeList.add("PACKAGE_BODY");
         final DDLFetcher fetcher = new DDLFetcher(schemaList, objectTypeList, args[0] , new File(args[1]), updateAfter);
-        fetcher.fetch();
+        final DDLFetcher.Result result = fetcher.fetch();
+        if (result == null){
+            System.exit(1);
+        }
     }
 }

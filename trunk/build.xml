@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="schema2svn" default="update" basedir=".">
+<project name="schema2svn" default="update" basedir="." >
     <path id="runtime.classpath">
         <fileset dir="./lib">
             <include name="*.jar"/>
@@ -12,11 +12,14 @@
     <target name="jar" depends="compile">
         <jar basedir="./tmp" file="./lib/schema2svn.jar"/>
     </target>
-    <target name="update" depends="jar">
-        <property name="instance.path"
-                value="./temp_data"
-                />
-        
+    <target name="update" depends="jar" >
+
+        <!--<property name="instance.path" value="."/> -->
+
+        <property file="build-my.properties"/>
+
+        <echo>Generating scripts to ${instance.path}</echo>
+
         <tstamp>
             <format property="timestamp" pattern="yyyy.MM.dd.HH.mm.ss.SSS"/>
         </tstamp>
@@ -26,10 +29,16 @@
         <echo>Last svn revision...</echo>
         <exec executable="svn"
               dir="${instance.path}"
+              vmlauncher="false">
+            <arg value="up"/>
+            </exec>
+        <exec executable="svn"
+              dir="${instance.path}"
               vmlauncher="false"
               outputproperty="last.commit.info">
             <arg value="log"/>
-            <arg value="-rHEAD"/>
+            <arg value="--limit"/>
+            <arg value="1"/>
             </exec>
         <delete  file="commit.info.txt"/>
         <copyfile src="commit.info.template.txt" dest="commit.info.txt"/>
@@ -38,23 +47,30 @@
         <echo>${last.commit.info}</echo>
         <loadfile srcfile="commit.info.txt" property="last.ddl.timestamp"/>
         <!--<fail />-->
+
         <echo>DB check as of ${last.ddl.timestamp}</echo>
         
-        <java classname="com.itci.Schema2svn" classpath="./lib/ojdbc14.jar;./lib/schema2svn.jar" 
-              outputproperty="schema2svn.output">
-            <arg value="jdbc:oracle:oci8:system/my@luxdev"/>
+        <java classname="com.itci.Schema2svn" classpath="./lib/ojdbc14.jar;./lib/schema2svn.jar"
+              resultproperty="result"
+              errorproperty="schema2svn.error"
+              outputproperty="schema2svn.output"
+                >
+            <arg value="${db.url}"/>
             <arg value="${instance.path}"/>
             <arg value="-d${last.ddl.timestamp}"/>
             <!--<arg value="-sBGM_COMMON"/>-->
-            <arg value="-sBGM_CONTRACTS_OBJECT,BGM_COMPONENTS_OBJECT,BGM_COMMON,CORE_ENTITIES,BGM_LOG"/>
+            <arg value="-s${schemas}"/>
         </java>
+        <echo>=====================================================================================</echo>
+        <echo>execution result: ${result}</echo>
+        <echo>${schema2svn.error}</echo>
         <echo>${schema2svn.output}</echo>
+        <!--<fail unless="${result}" message="Something wrong with database ${schema2svn.error}"/>-->
         <copyfile src="commit.info.template.txt" dest="commit.info.txt"/>
         <replace file="commit.info.txt" token="$$$" value="${schema2svn.output}"/>
         <replaceregexp file="commit.info.txt" match="[\s\S]*(\d{4}\.(\d{2}\.){5}\d{3})[\s\S]*" replace="\1"/>
         <loadfile srcfile="commit.info.txt" property="timestamp"/>
         <echo>Last ddl modified at ${timestamp}</echo>
-        
 
         <exec executable="svn"
               dir="${instance.path}"
@@ -72,6 +88,7 @@
 
         <echo>${svn.status}</echo>
         
+        <!--<fail/>-->
         <exec executable="svn"
               dir="${instance.path}"
               vmlauncher="false"
