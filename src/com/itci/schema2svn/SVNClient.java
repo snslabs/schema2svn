@@ -21,6 +21,10 @@ public class SVNClient {
         svnClientManager = SVNClientManager.newInstance();
     }
 
+    public void updateFolder(File dir) throws SVNException{
+        svnClientManager.getUpdateClient().doUpdate(dir, SVNRevision.HEAD, true);
+    }
+
     public void addMissing(File dir) throws SVNException {
         svnClientManager.getWCClient().doAdd(dir, true, false, false, true);
     }
