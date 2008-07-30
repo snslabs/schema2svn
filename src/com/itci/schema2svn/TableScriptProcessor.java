@@ -20,17 +20,4 @@ public class TableScriptProcessor implements ScriptProcessor{
         script = DOUBLE_LF.matcher(script).replaceAll("\n\n");
         return script;
     }
-
-    public static void main(String[] args) throws Exception {
-        FileReader fr = new FileReader("C:\\Serge\\PROJECT_ROOT\\java\\BUNGE\\schema2svn\\data\\BGM_CONTRACTS_OBJECT\\TABLE\\T_SPLIT.sql");
-        int cnt;
-        char[] buf = new char[1024];
-        StringBuffer sb = new StringBuffer();
-        while((cnt = fr.read(buf))!=-1){
-            sb.append(buf,0,cnt);
-        }
-        System.out.println(sb.toString());
-        System.out.println("--------------------------------------------------------------------------");
-        System.out.println(new TableScriptProcessor().processScript(sb.toString()));
-    }
 }
