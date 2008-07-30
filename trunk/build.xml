@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="schema2svn" default="update" basedir="." >
+<project name="schema2svn" default="run" basedir="." >
     <path id="runtime.classpath">
         <fileset dir="./lib">
             <include name="*.jar"/>
@@ -11,6 +11,18 @@
     </target>
     <target name="jar" depends="compile">
         <jar basedir="./tmp" file="./lib/schema2svn.jar"/>
+    </target>
+    <target name="run">
+        <property file="build-my.properties"/>
+        <java classname="com.itci.Schema2svn" classpath="./lib/ojdbc14.jar;./lib/schema2svn.jar"
+              failonerror="true">
+            <arg value="${db.url}"/>
+            <arg value="${instance.path}"/>
+            <arg value="-d"/>
+            <!--<arg value="-sBGM_COMMON"/>-->
+            <arg value="-s${schemas}"/>
+        </java>
+
     </target>
     <target name="update" depends="jar" >
 
@@ -95,7 +107,7 @@
               outputproperty="svn.status">
             <arg value="status"/>
             </exec>
-
+        
         <exec executable="svn"
               dir="${instance.path}"
               vmlauncher="false"

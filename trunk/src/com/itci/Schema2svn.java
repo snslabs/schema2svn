@@ -1,15 +1,16 @@
 package com.itci;
 
 import com.itci.schema2svn.DDLFetcher;
+import com.itci.schema2svn.SVNClient;
+import org.tmatesoft.svn.core.SVNException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.List;
 import java.io.File;
-import java.util.Date;
-import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 public class Schema2svn {
     private static final String DATE_PATTERN = "yyyy.MM.dd.HH.mm.ss.SSS";
@@ -25,21 +26,23 @@ public class Schema2svn {
         }
         System.out.println(args[0]);
         System.out.println(args[1]);
+        final File instanceDirectory = new File(args[1]);
         Date updateAfter = null;
         if(args.length>2){
             System.out.println(args[2]);
             try {
-                updateAfter = SDF.parse(args[2].replaceAll("-d",""));
+                final String source = args[2].replaceAll("-d", "");
+                if(source.length() != 0){
+                    updateAfter = SDF.parse(source);
+                }
+                else{
+                    updateAfter = null;
+                }
             }
             catch (ParseException e) {
                 System.out.println("Incorrect date format!\nUse " +DATE_PATTERN);
-                try {
-                    updateAfter = SDF.parse("2001.01.01.00.00.00.000");
-                } catch (ParseException e1) {
-                    e1.printStackTrace();
-                    return;
-                }
-//                return;
+                System.exit(1);
+
             }
 
         }
@@ -58,9 +61,51 @@ public class Schema2svn {
         objectTypeList.add("SEQUENCE");
         objectTypeList.add("PACKAGE");
         objectTypeList.add("PACKAGE_BODY");
-        final DDLFetcher fetcher = new DDLFetcher(schemaList, objectTypeList, args[0] , new File(args[1]), updateAfter);
+        final SVNClient svnClient = new SVNClient();
+        String message = null;
+        if(updateAfter == null){
+            try{
+                message = svnClient.getLastNonPhantomCommitMessage(instanceDirectory);
+                try{
+                    updateAfter = SDF.parse(message);
+                }
+                catch(Exception e){
+                    updateAfter = null;
+                }
+            }
+            catch(Exception e){
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+        final DDLFetcher fetcher = new DDLFetcher(schemaList, objectTypeList, args[0] , instanceDirectory, updateAfter);
         final DDLFetcher.Result result = fetcher.fetch();
         if (result == null){
+            System.exit(1);
+            return;
+        }
+        if(result.getModificationCounter() == 0){
+            System.out.println("No changes detected. Exiting");
+            System.exit(0);
+            return;
+        }
+        try {
+            svnClient.addMissing(instanceDirectory);
+        }
+        catch (SVNException e) {
+            System.out.println("Cannot add files to SVN");
+            e.printStackTrace();
+            System.exit(1);
+            return;
+        }
+        System.out.println("" + result.getModificationCounter() + " Modification detected. Last DDL Time = " + result.getRevision());
+        System.out.println("Commiting...");
+        try {
+            svnClient.commitDir(instanceDirectory, result.getRevision());
+        } catch (SVNException e) {
+            System.out.println("Cannot commit to SVN: " + e.getMessage());
+            e.printStackTrace();
             System.exit(1);
         }
     }
