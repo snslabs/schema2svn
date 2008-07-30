@@ -75,16 +75,21 @@ public class DDLFetcher {
                     if(updatedAfter!= null){
                         objectNamesStatement.setTimestamp(3, new Timestamp(updatedAfter.getTime()));
                     }
-                    final ResultSet rs = objectNamesStatement.executeQuery();
-                    while (rs.next()) {
-                        System.out.println(rs.getString(1) + " : " + rs.getString(2) + " : " + rs.getString(3)+":"+rs.getTimestamp(4));
-                        getAndStoreDDL(typeDirectory, rs.getString(1), rs.getString(2), rs.getString(3), rs.getTimestamp(4));
-                        if(rs.getTimestamp(4).getTime()>maxTimestamp){
-                            maxTimestamp = rs.getTimestamp(4).getTime(); 
+                    try{
+                        final ResultSet rs = objectNamesStatement.executeQuery();
+                        while (rs.next()) {
+                            System.out.println(rs.getString(1) + " : " + rs.getString(2) + " : " + rs.getString(3)+":"+rs.getTimestamp(4));
+                            getAndStoreDDL(typeDirectory, rs.getString(1), rs.getString(2), rs.getString(3), rs.getTimestamp(4));
+                            if(rs.getTimestamp(4).getTime()>maxTimestamp){
+                                maxTimestamp = rs.getTimestamp(4).getTime();
+                            }
+                            modificationCounter++;
                         }
-                        modificationCounter++;
+                        rs.close();
                     }
-                    rs.close();
+                    catch(SQLException e){
+                        System.out.println("ERROR " + e.getMessage());
+                    }
 
                 }
 
