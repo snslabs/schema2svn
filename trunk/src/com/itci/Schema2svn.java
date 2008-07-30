@@ -65,6 +65,7 @@ public class Schema2svn {
         String message = null;
         if(updateAfter == null){
             try{
+                svnClient.updateFolder(instanceDirectory);
                 message = svnClient.getLastNonPhantomCommitMessage(instanceDirectory);
                 try{
                     updateAfter = SDF.parse(message);
