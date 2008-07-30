@@ -164,21 +164,26 @@ public class DDLFetcher {
     }
 
     private void saveClobToWriter(Clob clob, FileWriter fw, ScriptProcessor scriptProcessor) throws IOException, SQLException {
-        final Reader characterStream = clob.getCharacterStream();
-        char[] buff = new char[1024];
-        int cnt;
-        if (scriptProcessor == null) {
-            while ((cnt = characterStream.read(buff)) != -1) {
-                fw.write(buff, 0, cnt);
+        try{
+            final Reader characterStream = clob.getCharacterStream();
+            char[] buff = new char[1024];
+            int cnt;
+            if (scriptProcessor == null) {
+                while ((cnt = characterStream.read(buff)) != -1) {
+                    fw.write(buff, 0, cnt);
+                }
+            }
+            else {
+                StringBuffer sb = new StringBuffer();
+                while ((cnt = characterStream.read(buff)) != -1) {
+                    sb.append(new String(buff, 0, cnt));
+                }
+                fw.write(scriptProcessor.processScript(sb.toString()));
+
             }
         }
-        else {
-            StringBuffer sb = new StringBuffer();
-            while ((cnt = characterStream.read(buff)) != -1) {
-                sb.append(new String(buff, 0, cnt));
-            }
-            fw.write(scriptProcessor.processScript(sb.toString()));
-
+        catch(Exception e){
+            System.out.println("Nothing in clob");
         }
     }
     public static class Result{
