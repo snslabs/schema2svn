@@ -122,7 +122,7 @@ public class DDLFetcher {
         }
         ddlStatement = connection.prepareStatement(
                 "select " +
-                        "dbms_metadata.get_ddl(?,?,?), dbms_metadata.get_dependent_ddl('OBJECT_GRANT',?,?) " +
+                        "dbms_metadata.get_ddl(?,?,?) " +
                         "from dual"
         );
         grantsStatement = connection.prepareStatement(
