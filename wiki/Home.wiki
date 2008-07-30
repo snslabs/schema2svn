@@ -12,3 +12,10 @@ This is what this project was created for. The aim is to create an utility, that
 
 
 = Details =
+
+Utility organized as jar file and ant script. Substituting build.properties file you configure database link and desired folder to put generated scripts to.
+
+== Some key features ==
+  * Utility takes the last non-phantom revision in specified folder and tries to locate last DDL timestamp in SVN comment to that revision. It expects timestamp in following format: `yyyy.MM.dd.HH.mm.ss.SSS`. If none located it fetchs DDL  for all objects. If timestamp was located - it generated only those objects, for which LAST_DDL_TIME value is greater then timestamp. This allows remove overhead of regenerating DDL for unchanged objects.
+
+  * Once Object DDL scripts are generated and saved - utility adds all prevoiusly non-existing script files to SVN using `svn add` and commits with comment message consisting of MAX(LAST_DDL_TIME) of all objects in specified schemas.
