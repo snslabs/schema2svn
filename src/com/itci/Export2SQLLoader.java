@@ -227,7 +227,7 @@ public class Export2SQLLoader {
                     new ArrayList(Arrays.asList(new String[]{schema})),
                     new ArrayList(Arrays.asList(new String[]{"SEQUENCE"})),
                     conn,
-                    new File("SEQUENCE"), 
+                    new File(schema), 
                     null
             );
             DDLFetcher.Result res = ddlFetcher.fetch();
