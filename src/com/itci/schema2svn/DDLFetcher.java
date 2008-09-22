@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.sql.*;
 import java.util.List;
+import java.util.ArrayList;
 
 public class DDLFetcher {
     private List schemaList;
@@ -17,6 +18,7 @@ public class DDLFetcher {
     private File destinationDirectory;
     private java.util.Date updatedAfter;
     private Connection connection;
+    private boolean isConnectionExternal = false;
     private PreparedStatement objectNamesStatement;
     private PreparedStatement tableMetadataStatement;
     private PreparedStatement ddlStatement;
@@ -32,18 +34,41 @@ public class DDLFetcher {
         this.updatedAfter = updatedAfter;
     }
 
+    public DDLFetcher(ArrayList schemaList, ArrayList objectTypes, Connection conn, File destinationDirectory, java.util.Date updatedAfter) {
+        this.schemaList = schemaList;
+        this.objectTypes = objectTypes;
+        this.connection = conn;
+        this.destinationDirectory = destinationDirectory;
+        this.updatedAfter = updatedAfter;
+    }
+
     public Result fetch() {
-        try {
-            DriverManager.registerDriver(new OracleDriver());
+        
+        if(connection == null){
+            isConnectionExternal = false;
+            try {
+                DriverManager.registerDriver(new OracleDriver());
+            }
+            catch (SQLException e) {
+                System.out.println("Cannot register Oracle Driver");
+                e.printStackTrace();
+                return null;
+            }
+            try{
+                connection = DriverManager.getConnection(connectionUrl);
+            }
+            catch(SQLException e){
+                System.out.println("Cannot connect to database");
+                e.printStackTrace();
+                return null;
+            }
         }
-        catch (SQLException e) {
-            System.out.println("Cannot register Oracle Driver");
-            e.printStackTrace();
-            return null;
+        else{
+            isConnectionExternal = true;
         }
+        
         long maxTimestamp = updatedAfter == null ? 0 : updatedAfter.getTime();
         try {
-            connection = DriverManager.getConnection(connectionUrl);
 
             initStatements();
             System.out.println("Checking modifications since " + (updatedAfter != null ? updatedAfter.toString() : "0"));
@@ -101,7 +126,7 @@ public class DDLFetcher {
             return null;
         }
         finally {
-            if (connection != null) {
+            if (!isConnectionExternal && connection != null) {
                 try {
                     connection.close();
                 }
